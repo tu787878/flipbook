@@ -19,7 +19,7 @@ try {
   console.warn('Canvas or pdfjs-dist not available. PDF processing will be disabled.');
 }
 
-interface PageImage {
+export interface PageImage {
   pageNumber: number;
   imagePath: string;
   thumbnailPath: string;

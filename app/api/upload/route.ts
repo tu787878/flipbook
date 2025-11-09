@@ -4,14 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { saveFile, UPLOAD_DIR } from '@/lib/upload';
 import { join } from 'path';
 import { generateSlug } from '@/lib/utils';
-
-// Try to import PDF processor, but handle if canvas is not installed
-let convertPDFToImages: any;
-try {
-  convertPDFToImages = require('@/lib/pdf-processor').convertPDFToImages;
-} catch (error) {
-  console.warn('PDF processing not available. Only image uploads will work.');
-}
+import { convertPDFToImages, PageImage } from '@/lib/pdf-processor';
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,7 +48,7 @@ export async function POST(request: NextRequest) {
         const outputDir = join(UPLOAD_DIR, folder);
         const pageImages = await convertPDFToImages(buffer, outputDir);
 
-        pages = pageImages.map((img) => ({
+        pages = pageImages.map((img: PageImage) => ({
           pageNumber: img.pageNumber,
           imageUrl: img.imagePath,
           thumbnail: img.thumbnailPath,

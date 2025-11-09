@@ -19,7 +19,19 @@
 - ✅ `app/api/shops/route.ts`
 - ✅ `app/api/shops/[shopId]/route.ts`
 
-### 2. ⚠️ PDF Warning (Not Critical)
+### 2. ✅ TypeScript Any Type Error
+**Error:** `Parameter 'img' implicitly has an 'any' type`
+
+**Fix:** Added proper type annotations:
+- Exported `PageImage` interface from `lib/pdf-processor.ts`
+- Imported `PageImage` type in `app/api/upload/route.ts`
+- Added explicit type annotation to map callback
+
+**Files Changed:**
+- ✅ `lib/pdf-processor.ts` (exported interface)
+- ✅ `app/api/upload/route.ts` (added type import and annotation)
+
+### 3. ⚠️ PDF Warning (Not Critical)
 **Warning:** `Module not found: Can't resolve 'pdfjs-dist'`
 
 This is expected - `pdfjs-dist` is an optional dependency. Docker build includes it via canvas installation.
