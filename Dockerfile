@@ -2,7 +2,7 @@
 
 # Stage 1: Dependencies
 FROM node:18-alpine AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl3 openssl-dev
 
 # Install canvas dependencies
 RUN apk add --no-cache \
@@ -28,7 +28,7 @@ RUN npm ci
 
 # Stage 2: Builder
 FROM node:18-alpine AS builder
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl3 openssl-dev
 
 # Install canvas dependencies for build
 RUN apk add --no-cache \
@@ -58,7 +58,7 @@ RUN npm run build
 
 # Stage 3: Runner
 FROM node:18-alpine AS runner
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl3
 
 # Install runtime dependencies for canvas
 RUN apk add --no-cache \

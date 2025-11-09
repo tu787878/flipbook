@@ -72,5 +72,19 @@ docker-compose down -v
 
 ---
 
+### 4. ✅ Prisma OpenSSL Compatibility
+**Error:** `Prisma failed to detect the libssl/openssl version`
+
+**Fix:** Added OpenSSL 3.x support for Alpine Linux
+- Installed `openssl3` in all Docker stages
+- Added `binaryTargets` to Prisma schema for Alpine + OpenSSL 3.x
+- Ensures Prisma engine works correctly in Alpine container
+
+**Files Changed:**
+- ✅ `Dockerfile` (added openssl3 to all stages)
+- ✅ `prisma/schema.prisma` (added binaryTargets)
+
+---
+
 **Status:** Ready to build! 🐳🚀
 
