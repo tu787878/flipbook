@@ -84,6 +84,18 @@ docker-compose down -v
 - ✅ `Dockerfile` (added openssl3 to all stages)
 - ✅ `prisma/schema.prisma` (added binaryTargets)
 
+### 5. ✅ Missing esbuild for tsx
+**Error:** `Cannot find package 'esbuild' imported from tsx`
+
+**Fix:** Added esbuild as a production dependency
+- `tsx` requires `esbuild` to transpile TypeScript
+- Added `esbuild` to dependencies in package.json
+- Copy esbuild node_modules to runner stage in Dockerfile
+
+**Files Changed:**
+- ✅ `package.json` (added esbuild to dependencies)
+- ✅ `Dockerfile` (copy esbuild node_modules)
+
 ---
 
 **Status:** Ready to build! 🐳🚀
