@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: flipbook-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-flipbook}
+      MYSQL_USER: ${MYSQL_USER:-flipbook_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-flipbook_password}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - flipbook-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flipbook-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3002}:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mysql://${MYSQL_USER:-flipbook_user}:${MYSQL_PASSWORD:-flipbook_password}@mysql:3306/${MYSQL_DATABASE:-flipbook}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+    volumes:
+      - ./public/uploads:/app/public/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - flipbook-network
+    command: >
+      sh -c "
+        npx prisma db push &&
+        npx prisma db seed &&
+        node server.js
+      "
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  flipbook-network:
+    driver: bridge
+

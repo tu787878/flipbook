@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* StPageFlip custom styles */
+.stf__wrapper {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.stf__parent {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.stf__block {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+  transform: scale(1.2) !important;
+}
+
+/* Mobile: bigger zoom for readability */
+@media (max-width: 768px) {
+  .stf__block {
+    transform: scale(1.5) !important;
+  }
+}
+
+.stf__item {
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stf__item img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}

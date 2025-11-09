@@ -1,0 +1,60 @@
+{
+  "name": "flip-book",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma db push --force-reset",
+    "setup": "npm install && npx prisma generate && npx prisma db push && npm run db:seed && mkdir -p public/uploads"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.19.1",
+    "@react-three/drei": "^9.111.3",
+    "@react-three/fiber": "^8.17.5",
+    "@tanstack/react-query": "^5.51.23",
+    "axios": "^1.7.4",
+    "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
+    "framer-motion": "^11.3.30",
+    "lucide-react": "^0.427.0",
+    "next": "14.2.5",
+    "next-auth": "^4.24.7",
+    "page-flip": "^2.0.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "^14.2.3",
+    "sharp": "^0.33.5",
+    "tailwind-merge": "^2.5.2",
+    "three": "^0.167.1",
+    "zustand": "^4.5.5"
+  },
+  "optionalDependencies": {
+    "canvas": "^2.11.2",
+    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^4.5.136"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.3.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.5",
+    "postcss": "^8.4.41",
+    "prisma": "^5.19.1",
+    "tailwindcss": "^3.4.10",
+    "tsx": "^4.7.0",
+    "typescript": "^5.5.4"
+  }
+}
