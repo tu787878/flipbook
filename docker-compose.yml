@@ -37,7 +37,10 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=mysql://${MYSQL_USER:-flipbook_user}:${MYSQL_PASSWORD:-flipbook_password}@mysql:3306/${MYSQL_DATABASE:-flipbook}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3002}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@flipbook.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - ADMIN_NAME=${ADMIN_NAME:-Admin}
     volumes:
       - ./public/uploads:/app/public/uploads
     depends_on:

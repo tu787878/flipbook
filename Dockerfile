@@ -85,10 +85,18 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/package.json ./package.json
 
-# Create uploads directory
+# Copy necessary node_modules for prisma and tsx
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
+COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
+
+# Create uploads directory and set proper permissions
 RUN mkdir -p ./public/uploads && chown -R nextjs:nodejs ./public/uploads
+RUN chown -R nextjs:nodejs ./node_modules
 
 USER nextjs
 
