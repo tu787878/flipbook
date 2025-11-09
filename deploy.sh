@@ -56,8 +56,8 @@ echo "🛑 Stopping existing containers..."
 docker-compose down 2>/dev/null || true
 
 # Build and start services
-echo "🏗️  Building Docker images..."
-docker-compose build --no-cache
+echo "🏗️  Building Docker images (this may take a few minutes)..."
+docker-compose build --no-cache --pull
 
 echo ""
 echo "🚀 Starting services..."
