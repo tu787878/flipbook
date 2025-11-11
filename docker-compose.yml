@@ -50,6 +50,8 @@ services:
       - flipbook-network
     command: >
       sh -c "
+        mkdir -p /app/public/uploads/menus /app/public/uploads/shops &&
+        chmod -R 777 /app/public/uploads &&
         npx prisma db push &&
         npx prisma db seed &&
         node server.js

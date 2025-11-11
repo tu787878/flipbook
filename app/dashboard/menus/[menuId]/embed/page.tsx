@@ -145,7 +145,7 @@ export default function EmbedCodePage() {
                 type="text"
                 readOnly
                 value={`${window.location.origin}/embed/${menu.shop.slug}/${menu.slug}`}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-900"
               />
               <Link
                 href={`/embed/${menu.shop.slug}/${menu.slug}`}

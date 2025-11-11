@@ -94,9 +94,11 @@ COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs
 COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
 
-# Create uploads directory and set proper permissions
-RUN mkdir -p ./public/uploads && chown -R nextjs:nodejs ./public/uploads
+# Create uploads directory structure and set proper permissions
+RUN mkdir -p ./public/uploads/menus ./public/uploads/shops
+RUN chown -R nextjs:nodejs ./public/uploads
 RUN chown -R nextjs:nodejs ./node_modules
+RUN chmod -R 755 ./public/uploads
 
 USER nextjs
 

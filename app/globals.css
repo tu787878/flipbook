@@ -26,6 +26,22 @@ body {
   }
 }
 
+/* Ensure all form inputs are visible with good contrast */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+textarea,
+select {
+  @apply text-gray-900 placeholder-gray-400;
+}
+
+input[type="text"]:disabled,
+input[type="email"]:disabled,
+textarea:disabled {
+  @apply text-gray-700 bg-gray-100;
+}
+
 /* StPageFlip custom styles */
 .stf__wrapper {
   width: 100% !important;

@@ -159,7 +159,7 @@ export default function ShopDetailPage() {
                   type="text"
                   value={menuName}
                   onChange={(e) => setMenuName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900 placeholder-gray-400 bg-white"
                   placeholder="Dinner Menu"
                 />
               </div>
@@ -171,7 +171,7 @@ export default function ShopDetailPage() {
                 <textarea
                   value={menuDescription}
                   onChange={(e) => setMenuDescription(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900 placeholder-gray-400 bg-white"
                   placeholder="Brief description..."
                   rows={3}
                 />
