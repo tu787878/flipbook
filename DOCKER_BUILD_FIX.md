@@ -84,17 +84,19 @@ docker-compose down -v
 - ✅ `Dockerfile` (added openssl3 to all stages)
 - ✅ `prisma/schema.prisma` (added binaryTargets)
 
-### 5. ✅ Missing esbuild for tsx
-**Error:** `Cannot find package 'esbuild' imported from tsx`
+### 5. ✅ Simplified Seed Script
+**Error:** `Cannot find package 'get-tsconfig'` and multiple tsx dependencies missing
 
-**Fix:** Added esbuild as a production dependency
-- `tsx` requires `esbuild` to transpile TypeScript
-- Added `esbuild` to dependencies in package.json
-- Copy esbuild node_modules to runner stage in Dockerfile
+**Fix:** Converted seed script from TypeScript to JavaScript
+- Changed `prisma/seed.ts` to `prisma/seed.js`
+- No longer need tsx, esbuild, get-tsconfig, or other build tools in production
+- Simpler and more reliable - just runs with Node.js
+- Updated package.json scripts to use `node prisma/seed.js`
 
 **Files Changed:**
-- ✅ `package.json` (added esbuild to dependencies)
-- ✅ `Dockerfile` (copy esbuild node_modules)
+- ✅ `prisma/seed.js` (new - converted from TypeScript)
+- ✅ `package.json` (removed tsx/esbuild, updated seed script)
+- ✅ `Dockerfile` (removed tsx/esbuild copies, added bcryptjs)
 
 ---
 
