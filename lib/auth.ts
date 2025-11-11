@@ -16,8 +16,14 @@ export const authOptions: AuthOptions = {
           return null;
         }
 
+        // Allow login with just "admin" as shortcut
+        let email = credentials.email;
+        if (email.toLowerCase() === 'admin') {
+          email = process.env.ADMIN_EMAIL || 'admin@flipbook.com';
+        }
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email: email },
         });
 
         if (!user) {
