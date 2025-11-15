@@ -29,12 +29,13 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [spreadView, setSpreadView] = useState(settings?.spreadView ?? true);
   const [isMobile, setIsMobile] = useState(false);
+  const [bookDimensions, setBookDimensions] = useState<{ width: number; height: number; scale?: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const showControls = settings?.showControls ?? true;
   const backgroundColor = settings?.backgroundColor || '#f3f4f6';
 
-  // Detect mobile on mount
+  // Detect mobile on mount and ensure it's set before initialization
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -47,63 +48,134 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
   useEffect(() => {
     if (!bookRef.current || pages.length === 0) return;
 
-    try {
-      // Initialize PageFlip with mobile-aware settings
-      const pageFlip = new PageFlip(bookRef.current, {
-        width: isMobile ? window.innerWidth - 20 : 700,
-        height: isMobile ? window.innerHeight * 0.7 : 933,
-        size: 'stretch',
-        minWidth: isMobile ? 300 : 400,
-        maxWidth: isMobile ? window.innerWidth : 1400,
-        minHeight: isMobile ? 400 : 533,
-        maxHeight: isMobile ? window.innerHeight * 0.8 : 1867,
-        maxShadowOpacity: 0.3,
-        showCover: false,
-        mobileScrollSupport: true,
-        swipeDistance: 30,
-        clickEventForward: true,
-        usePortrait: isMobile, // Single page on mobile
-        startPage: 0,
-        drawShadow: true,
-        flippingTime: 800,
-        useMouseEvents: true,
-        autoSize: true,
-        showPageCorners: !isMobile,
-      });
+    // Wait a bit to ensure DOM is ready and mobile detection is complete
+    const initTimer = setTimeout(() => {
+      if (!bookRef.current) return;
 
-      pageFlipRef.current = pageFlip;
-
-      // Load pages
-      pageFlip.loadFromImages(pages.map(p => p.imageUrl));
-
-      // Event listeners
-      pageFlip.on('flip', (e: any) => {
-        setCurrentPage(e.data);
-      });
-
-      pageFlip.on('changeState', (e: any) => {
-        setTotalPages(pageFlip.getPageCount());
-      });
-
-      // Handle keyboard navigation
-      const handleKeyPress = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowLeft') handlePrevPage();
-        if (e.key === 'ArrowRight') handleNextPage();
-        if (e.key === 'f' || e.key === 'F') toggleFullscreen();
-      };
-
-      window.addEventListener('keydown', handleKeyPress);
-
-      return () => {
-        window.removeEventListener('keydown', handleKeyPress);
-        if (pageFlipRef.current) {
-          pageFlipRef.current.destroy();
+      try {
+        // Get actual container dimensions
+        const container = bookRef.current.parentElement;
+        const containerWidth = container?.clientWidth || window.innerWidth;
+        const containerHeight = container?.clientHeight || window.innerHeight;
+        
+        const mobile = window.innerWidth < 768;
+        
+        // Calculate dimensions - mobile uses single page, desktop uses 2-page spread
+        let width, height;
+        if (mobile) {
+          // For mobile: single page view - calculate to fit within viewport
+          // Account for controls (60px - minimized) and padding
+          const availableWidth = Math.min(containerWidth - 20, window.innerWidth - 20);
+          const availableHeight = Math.min(containerHeight - 60, window.innerHeight - 60);
+          
+          // For single page (portrait), typical aspect ratio is ~0.7:1 (width:height)
+          // But we need to fit both width and height constraints
+          const maxWidthByHeight = (availableHeight * 0.7); // height * aspect ratio
+          const maxHeightByWidth = (availableWidth / 0.7); // width / aspect ratio
+          
+          // Use the smaller dimension to ensure it fits
+          if (maxWidthByHeight < availableWidth) {
+            width = maxWidthByHeight;
+            height = availableHeight;
+          } else {
+            width = availableWidth;
+            height = maxHeightByWidth;
+          }
+          
+          // Ensure minimum readable size
+          width = Math.max(width, 250);
+          height = Math.max(height, 350);
+          
+          // Calculate scale to ensure it fits in viewport
+          const scaleX = (availableWidth - 20) / width;
+          const scaleY = (availableHeight - 20) / height;
+          const scale = Math.min(1, scaleX, scaleY); // Don't scale up, only down
+          
+          // Store dimensions for CSS
+          setBookDimensions({ width, height, scale });
+        } else {
+          // Desktop: 2-page spread
+          width = 700;
+          height = 933;
+          setBookDimensions({ width, height });
         }
-      };
-    } catch (error) {
-      console.error('Error initializing PageFlip:', error);
-    }
-  }, [pages, isMobile]);
+
+        // Initialize PageFlip with mobile-aware settings
+        const pageFlip = new PageFlip(bookRef.current, {
+          width: width,
+          height: height,
+          size: mobile ? 'fixed' : 'stretch', // Use fixed size on mobile to prevent overflow
+          minWidth: mobile ? 300 : 400,
+          maxWidth: mobile ? width : 1400,
+          minHeight: mobile ? 400 : 533,
+          maxHeight: mobile ? height : 1867,
+          maxShadowOpacity: 0.3,
+          showCover: false,
+          mobileScrollSupport: true,
+          swipeDistance: 30,
+          clickEventForward: true,
+          usePortrait: mobile, // Single page on mobile, 2-page spread on desktop
+          startPage: 0,
+          drawShadow: true,
+          flippingTime: 800,
+          useMouseEvents: true,
+          autoSize: !mobile, // Disable autoSize on mobile to use fixed dimensions
+          showPageCorners: !mobile,
+        });
+
+        pageFlipRef.current = pageFlip;
+
+        // Load pages - ensure images are loaded
+        const imageUrls = pages.map(p => p.imageUrl);
+        pageFlip.loadFromImages(imageUrls);
+
+        // Event listeners
+        pageFlip.on('flip', (e: any) => {
+          setCurrentPage(e.data);
+        });
+
+        pageFlip.on('changeState', (e: any) => {
+          setTotalPages(pageFlip.getPageCount());
+        });
+
+        // Debug: Log initialization
+        console.log('PageFlip initialized:', {
+          mobile,
+          width,
+          height,
+          pagesCount: pages.length,
+          containerWidth: containerWidth,
+          containerHeight: containerHeight
+        });
+
+        // Handle keyboard navigation
+        const handleKeyPress = (e: KeyboardEvent) => {
+          if (e.key === 'ArrowLeft') handlePrevPage();
+          if (e.key === 'ArrowRight') handleNextPage();
+          if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+
+        return () => {
+          window.removeEventListener('keydown', handleKeyPress);
+          if (pageFlipRef.current) {
+            pageFlipRef.current.destroy();
+          }
+        };
+      } catch (error) {
+        console.error('Error initializing PageFlip:', error);
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(initTimer);
+      if (pageFlipRef.current) {
+        pageFlipRef.current.destroy();
+        pageFlipRef.current = null;
+      }
+    };
+  }, [pages]);
 
   const handleNextPage = () => {
     if (pageFlipRef.current) {
@@ -148,42 +220,60 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
       )}
 
       {/* Main Flipbook Area */}
-      <div className={`flex-1 flex items-center justify-center overflow-hidden ${isMobile ? 'p-0' : 'p-2'}`}>
+      <div 
+        className={`flex-1 flex items-center justify-center ${isMobile ? 'overflow-hidden p-2' : 'overflow-hidden p-2'}`}
+        style={{ 
+          minHeight: isMobile ? '400px' : '600px',
+          maxHeight: isMobile ? 'calc(100vh - 60px)' : 'none',
+          position: 'relative',
+        }}
+      >
         <div
           ref={bookRef}
-          className="relative w-full h-full flex items-center justify-center"
+          className="relative"
           style={{
-            minHeight: isMobile ? '500px' : 'auto',
+            width: isMobile && bookDimensions ? `${bookDimensions.width}px` : '100%',
+            height: isMobile && bookDimensions ? `${bookDimensions.height}px` : 'auto',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            margin: '0 auto',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            ...(isMobile && bookDimensions && bookDimensions.scale && bookDimensions.scale < 1 && {
+              transform: `scale(${bookDimensions.scale})`,
+              transformOrigin: 'center center',
+            }),
           }}
         />
       </div>
 
       {/* Controls */}
       {showControls && (
-        <div className="bg-white/90 backdrop-blur-sm border-t px-4 py-2">
-          <div className="flex items-center justify-between max-w-6xl mx-auto">
+        <div className={`bg-white/90 backdrop-blur-sm border-t ${isMobile ? 'px-2 py-1' : 'px-4 py-2'}`}>
+          <div className={`flex items-center ${isMobile ? 'justify-center' : 'justify-between'} max-w-6xl mx-auto`}>
             {/* Navigation */}
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center ${isMobile ? 'gap-1.5' : 'gap-2'}`}>
               <button
                 onClick={handlePrevPage}
                 disabled={currentPage === 0}
-                className="p-1.5 rounded-lg bg-purple-600 text-white disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-purple-700 active:bg-purple-800 transition-colors"
+                className={`${isMobile ? 'p-1' : 'p-1.5'} rounded-lg bg-purple-600 text-white disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-purple-700 active:bg-purple-800 transition-colors`}
                 aria-label="Previous page"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className={isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
               </button>
 
-              <span className="text-xs font-medium px-2 text-gray-900">
+              <span className={`${isMobile ? 'text-[10px] px-1.5' : 'text-xs px-2'} font-medium text-gray-900`}>
                 {currentPage + 1}/{totalPages || pages.length}
               </span>
 
               <button
                 onClick={handleNextPage}
                 disabled={currentPage >= (totalPages || pages.length) - 1}
-                className="p-1.5 rounded-lg bg-purple-600 text-white disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-purple-700 active:bg-purple-800 transition-colors"
+                className={`${isMobile ? 'p-1' : 'p-1.5'} rounded-lg bg-purple-600 text-white disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-purple-700 active:bg-purple-800 transition-colors`}
                 aria-label="Next page"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className={isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
               </button>
             </div>
 

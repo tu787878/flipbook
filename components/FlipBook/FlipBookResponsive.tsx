@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import FlipBookStPage from './FlipBookStPage';
-import FlipBookMobile from './FlipBookMobile';
 
 interface Page {
   id: string;
@@ -18,18 +17,10 @@ interface FlipBookResponsiveProps {
 }
 
 export default function FlipBookResponsive({ pages, shopName, menuName, settings }: FlipBookResponsiveProps) {
-  const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Prevent hydration mismatch
@@ -44,11 +35,7 @@ export default function FlipBookResponsive({ pages, shopName, menuName, settings
     );
   }
 
-  // Use simple mobile viewer on mobile, StPageFlip on desktop
-  if (isMobile) {
-    return <FlipBookMobile pages={pages} shopName={shopName} menuName={menuName} />;
-  }
-
+  // Always use StPageFlip with 2-page spread view (both mobile and desktop)
   return <FlipBookStPage pages={pages} shopName={shopName} menuName={menuName} settings={settings} />;
 }
 
