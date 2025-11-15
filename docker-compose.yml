@@ -43,7 +43,6 @@ services:
       - ADMIN_NAME=${ADMIN_NAME:-Admin}
     volumes:
       - uploads_data:/app/public/uploads
-      - seed_flag:/app/.seed-flag
     depends_on:
       mysql:
         condition: service_healthy
@@ -54,14 +53,28 @@ services:
         mkdir -p /app/public/uploads/menus /app/public/uploads/shops &&
         echo 'Applying database schema...' &&
         npx prisma db push &&
-        if [ ! -f /app/.seed-flag ]; then
-          echo 'First run detected, seeding database...' &&
-          npx prisma db seed &&
-          touch /app/.seed-flag &&
-          echo 'Seed completed. Flag file created to prevent re-seeding.'
-        else
-          echo 'Database already seeded (flag file exists), skipping seed to preserve data.'
-        fi &&
+        echo 'Checking if database needs seeding...' &&
+        node -e \"
+          const { PrismaClient } = require('@prisma/client');
+          const prisma = new PrismaClient();
+          (async () => {
+            try {
+              const userCount = await prisma.user.count();
+              if (userCount === 0) {
+                console.log('Database is empty, will run seed...');
+                process.exit(1);
+              } else {
+                console.log('Database already has ' + userCount + ' user(s), skipping seed.');
+                process.exit(0);
+              }
+            } catch (error) {
+              console.log('Error checking database, will attempt seed:', error.message);
+              process.exit(1);
+            } finally {
+              await prisma.\$disconnect();
+            }
+          })();
+        \" && echo 'Skipping seed (database not empty)' || (echo 'Running seed...' && npx prisma db seed) &&
         node server.js
       "
 
@@ -69,8 +82,6 @@ volumes:
   mysql_data:
     driver: local
   uploads_data:
-    driver: local
-  seed_flag:
     driver: local
 
 networks:
