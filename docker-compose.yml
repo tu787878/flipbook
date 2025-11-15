@@ -50,7 +50,9 @@ services:
       - flipbook-network
     entrypoint: >
       sh -c "
-        mkdir -p /app/public/uploads/menus /app/public/uploads/shops &&
+        echo 'Setting up uploads directory...' &&
+        mkdir -p /app/public/uploads/menus /app/public/uploads/shops /app/public/uploads/temp &&
+        chmod -R 755 /app/public/uploads &&
         echo 'Applying database schema...' &&
         npx prisma db push &&
         echo 'Checking if database needs seeding...' &&
@@ -75,6 +77,7 @@ services:
             }
           })();
         \" && echo 'Skipping seed (database not empty)' || (echo 'Running seed...' && npx prisma db seed) &&
+        echo 'Starting Next.js server...' &&
         node server.js
       "
 

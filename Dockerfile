@@ -81,9 +81,14 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy built application
-COPY --from=builder /app/public ./public
+# Note: In standalone mode, Next.js copies public folder to .next/standalone/public
+# We copy standalone output first (includes public folder)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Ensure public folder exists at root (for volume mount compatibility)
+# Standalone mode includes public in .next/standalone/public, but we need it at root too
+RUN mkdir -p ./public
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 
@@ -95,10 +100,12 @@ COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs
 COPY --from=builder /app/node_modules/.bin ./node_modules/.bin
 
 # Create uploads directory structure and set proper permissions
-RUN mkdir -p ./public/uploads/menus ./public/uploads/shops
-RUN chown -R nextjs:nodejs ./public/uploads
+# Ensure uploads directory exists and is writable (volume will mount here)
+RUN mkdir -p ./public/uploads/menus ./public/uploads/shops ./public/uploads/temp
+RUN chown -R nextjs:nodejs ./public
 RUN chown -R nextjs:nodejs ./node_modules
-RUN chmod -R 755 ./public/uploads
+RUN chmod -R 755 ./public
+RUN chmod -R 777 ./public/uploads
 
 USER nextjs
 
