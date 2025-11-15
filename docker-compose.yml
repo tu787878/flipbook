@@ -43,6 +43,7 @@ services:
       - ADMIN_NAME=${ADMIN_NAME:-Admin}
     volumes:
       - uploads_data:/app/public/uploads
+      - seed_flag:/app/.seed-flag
     depends_on:
       mysql:
         condition: service_healthy
@@ -51,8 +52,16 @@ services:
     entrypoint: >
       sh -c "
         mkdir -p /app/public/uploads/menus /app/public/uploads/shops &&
+        echo 'Applying database schema...' &&
         npx prisma db push &&
-        npx prisma db seed &&
+        if [ ! -f /app/.seed-flag ]; then
+          echo 'First run detected, seeding database...' &&
+          npx prisma db seed &&
+          touch /app/.seed-flag &&
+          echo 'Seed completed. Flag file created to prevent re-seeding.'
+        else
+          echo 'Database already seeded (flag file exists), skipping seed to preserve data.'
+        fi &&
         node server.js
       "
 
@@ -60,6 +69,8 @@ volumes:
   mysql_data:
     driver: local
   uploads_data:
+    driver: local
+  seed_flag:
     driver: local
 
 networks:
