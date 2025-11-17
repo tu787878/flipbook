@@ -118,10 +118,10 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
           height = Math.max(height, 350);
           
           // Calculate scale to ensure it fits in viewport with extra margin (zoom out)
-          // Add more padding (80px) to zoom out and show book border
-          const scaleX = (availableWidth - 80) / width;
-          const scaleY = (availableHeight - 80) / height;
-          const scale = Math.min(0.85, scaleX, scaleY); // Cap at 0.85 to show book border
+          // Add more padding (120px) to zoom out and show book border
+          const scaleX = (availableWidth - 120) / width;
+          const scaleY = (availableHeight - 120) / height;
+          const scale = Math.min(0.75, scaleX, scaleY); // Cap at 0.75 to show more book border
           
           // Store dimensions for CSS
           setBookDimensions({ width, height, scale });
