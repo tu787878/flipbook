@@ -125,14 +125,9 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
           // Store dimensions for CSS
           setBookDimensions({ width, height, scale });
         } else {
-          // Desktop: 2-page spread - use larger dimensions for better quality
-          // Calculate based on container but ensure high resolution
-          const availableWidth = Math.min(containerWidth - 40, 1400);
-          const availableHeight = Math.min(containerHeight - 100, 1867);
-          
-          // Use larger dimensions for better image quality
-          width = Math.max(800, Math.min(availableWidth, 1200));
-          height = Math.max(1067, Math.min(availableHeight, 1600));
+          // Desktop: 2-page spread
+          width = 700;
+          height = 933;
           setBookDimensions({ width, height });
         }
 
@@ -141,10 +136,10 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
           width: width,
           height: height,
           size: mobile ? 'fixed' : 'stretch', // Use fixed size on mobile to prevent overflow
-          minWidth: mobile ? 300 : 800,
-          maxWidth: mobile ? width : 1600,
-          minHeight: mobile ? 400 : 1067,
-          maxHeight: mobile ? height : 2133,
+          minWidth: mobile ? 300 : 400,
+          maxWidth: mobile ? width : 1400,
+          minHeight: mobile ? 400 : 533,
+          maxHeight: mobile ? height : 1867,
           maxShadowOpacity: 0.3,
           showCover: false,
           mobileScrollSupport: true,
