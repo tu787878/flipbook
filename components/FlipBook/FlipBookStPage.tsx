@@ -125,9 +125,14 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
           // Store dimensions for CSS
           setBookDimensions({ width, height, scale });
         } else {
-          // Desktop: 2-page spread
-          width = 700;
-          height = 933;
+          // Desktop: 2-page spread - use larger dimensions for better quality
+          // Calculate based on container but ensure high resolution
+          const availableWidth = Math.min(containerWidth - 40, 1400);
+          const availableHeight = Math.min(containerHeight - 100, 1867);
+          
+          // Use larger dimensions for better image quality
+          width = Math.max(800, Math.min(availableWidth, 1200));
+          height = Math.max(1067, Math.min(availableHeight, 1600));
           setBookDimensions({ width, height });
         }
 
@@ -136,10 +141,10 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
           width: width,
           height: height,
           size: mobile ? 'fixed' : 'stretch', // Use fixed size on mobile to prevent overflow
-          minWidth: mobile ? 300 : 400,
-          maxWidth: mobile ? width : 1400,
-          minHeight: mobile ? 400 : 533,
-          maxHeight: mobile ? height : 1867,
+          minWidth: mobile ? 300 : 800,
+          maxWidth: mobile ? width : 1600,
+          minHeight: mobile ? 400 : 1067,
+          maxHeight: mobile ? height : 2133,
           maxShadowOpacity: 0.3,
           showCover: false,
           mobileScrollSupport: true,
@@ -156,9 +161,44 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
 
         pageFlipRef.current = pageFlip;
 
-        // Load pages - ensure images are loaded
-        const imageUrls = pages.map(p => p.imageUrl);
-        pageFlip.loadFromImages(imageUrls);
+        // Create HTML pages with direct img elements for better quality
+        // Clear any existing content
+        if (bookRef.current) {
+          bookRef.current.innerHTML = '';
+          
+          // Create page elements with direct img tags
+          pages.forEach((page) => {
+            const pageElement = document.createElement('div');
+            pageElement.className = 'page';
+            pageElement.style.width = '100%';
+            pageElement.style.height = '100%';
+            pageElement.style.display = 'flex';
+            pageElement.style.alignItems = 'center';
+            pageElement.style.justifyContent = 'center';
+            pageElement.style.overflow = 'hidden';
+            
+            const img = document.createElement('img');
+            img.src = page.imageUrl;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'contain';
+            img.style.display = 'block';
+            img.style.imageRendering = 'high-quality';
+            img.style.imageRendering = '-webkit-optimize-contrast';
+            img.draggable = false;
+            // Ensure image loads at full quality
+            img.loading = 'eager';
+            
+            pageElement.appendChild(img);
+            bookRef.current!.appendChild(pageElement);
+          });
+        }
+
+        // Load pages from HTML for direct image rendering (better quality)
+        const pageElements = bookRef.current?.querySelectorAll('.page');
+        if (pageElements && pageElements.length > 0) {
+          pageFlip.loadFromHTML(Array.from(pageElements) as HTMLElement[]);
+        }
 
         // Event listeners
         pageFlip.on('flip', (e: any) => {
