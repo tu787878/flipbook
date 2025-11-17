@@ -30,6 +30,7 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
   const [spreadView, setSpreadView] = useState(settings?.spreadView ?? true);
   const [isMobile, setIsMobile] = useState(false);
   const [bookDimensions, setBookDimensions] = useState<{ width: number; height: number; scale?: number } | null>(null);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const showControls = settings?.showControls ?? true;
@@ -45,8 +46,38 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Preload all images before initializing PageFlip
   useEffect(() => {
-    if (!bookRef.current || pages.length === 0) return;
+    if (pages.length === 0) return;
+
+    const preloadImages = async () => {
+      try {
+        const imagePromises = pages.map((page) => {
+          return new Promise<void>((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => resolve();
+            img.onerror = () => {
+              console.error(`Failed to load image: ${page.imageUrl}`);
+              resolve(); // Continue even if one image fails
+            };
+            img.src = page.imageUrl;
+          });
+        });
+
+        await Promise.all(imagePromises);
+        setImagesLoaded(true);
+      } catch (error) {
+        console.error('Error preloading images:', error);
+        setImagesLoaded(true); // Continue anyway
+      }
+    };
+
+    preloadImages();
+  }, [pages]);
+
+  useEffect(() => {
+    if (!bookRef.current || pages.length === 0 || !imagesLoaded) return;
 
     // Wait a bit to ensure DOM is ready and mobile detection is complete
     const initTimer = setTimeout(() => {
@@ -175,7 +206,7 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
         pageFlipRef.current = null;
       }
     };
-  }, [pages]);
+  }, [pages, imagesLoaded]);
 
   const handleNextPage = () => {
     if (pageFlipRef.current) {
@@ -228,24 +259,31 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
           position: 'relative',
         }}
       >
-        <div
-          ref={bookRef}
-          className="relative"
-          style={{
-            width: isMobile && bookDimensions ? `${bookDimensions.width}px` : '100%',
-            height: isMobile && bookDimensions ? `${bookDimensions.height}px` : 'auto',
-            maxWidth: '100%',
-            maxHeight: '100%',
-            margin: '0 auto',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            ...(isMobile && bookDimensions && bookDimensions.scale && bookDimensions.scale < 1 && {
-              transform: `scale(${bookDimensions.scale})`,
-              transformOrigin: 'center center',
-            }),
-          }}
-        />
+        {!imagesLoaded ? (
+          <div className="flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
+            <p className="text-gray-700 text-sm">Loading images...</p>
+          </div>
+        ) : (
+          <div
+            ref={bookRef}
+            className="relative"
+            style={{
+              width: isMobile && bookDimensions ? `${bookDimensions.width}px` : '100%',
+              height: isMobile && bookDimensions ? `${bookDimensions.height}px` : 'auto',
+              maxWidth: '100%',
+              maxHeight: '100%',
+              margin: '0 auto',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              ...(isMobile && bookDimensions && bookDimensions.scale && bookDimensions.scale < 1 && {
+                transform: `scale(${bookDimensions.scale})`,
+                transformOrigin: 'center center',
+              }),
+            }}
+          />
+        )}
       </div>
 
       {/* Controls */}
