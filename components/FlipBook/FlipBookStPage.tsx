@@ -172,6 +172,9 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
             pageElement.style.alignItems = 'center';
             pageElement.style.justifyContent = 'center';
             pageElement.style.overflow = 'hidden';
+            // Improve rendering quality
+            pageElement.style.imageRendering = '-webkit-optimize-contrast';
+            pageElement.style.imageRendering = 'crisp-edges';
             
             const img = document.createElement('img');
             img.src = page.imageUrl;
@@ -179,11 +182,13 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
             img.style.height = '100%';
             img.style.objectFit = 'contain';
             img.style.display = 'block';
-            img.style.imageRendering = 'high-quality';
+            // Use best quality rendering
             img.style.imageRendering = '-webkit-optimize-contrast';
             img.draggable = false;
             // Ensure image loads at full quality
             img.loading = 'eager';
+            // Set decoding to async for better performance while maintaining quality
+            img.decoding = 'async';
             
             pageElement.appendChild(img);
             bookRef.current!.appendChild(pageElement);
@@ -313,6 +318,7 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
+              imageRendering: '-webkit-optimize-contrast',
               ...(isMobile && bookDimensions && bookDimensions.scale && bookDimensions.scale < 1 && {
                 transform: `scale(${bookDimensions.scale})`,
                 transformOrigin: 'center center',
