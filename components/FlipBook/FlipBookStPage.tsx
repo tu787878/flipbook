@@ -117,10 +117,11 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
           width = Math.max(width, 250);
           height = Math.max(height, 350);
           
-          // Calculate scale to ensure it fits in viewport
-          const scaleX = (availableWidth - 20) / width;
-          const scaleY = (availableHeight - 20) / height;
-          const scale = Math.min(1, scaleX, scaleY); // Don't scale up, only down
+          // Calculate scale to ensure it fits in viewport with extra margin (zoom out)
+          // Add more padding (40px instead of 20px) to zoom out and show full page
+          const scaleX = (availableWidth - 40) / width;
+          const scaleY = (availableHeight - 40) / height;
+          const scale = Math.min(0.95, scaleX, scaleY); // Cap at 0.95 to ensure full page is visible
           
           // Store dimensions for CSS
           setBookDimensions({ width, height, scale });
