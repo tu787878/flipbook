@@ -55,12 +55,26 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
         const imagePromises = pages.map((page) => {
           return new Promise<void>((resolve) => {
             const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => resolve();
-            img.onerror = () => {
-              console.error(`Failed to load image: ${page.imageUrl}`);
+            // Don't set crossOrigin for same-origin requests
+            // This prevents CORS issues when loading from the same domain
+            img.onload = () => {
+              console.log(`Successfully loaded image: ${page.imageUrl}`);
+              resolve();
+            };
+            img.onerror = (error) => {
+              console.error(`Failed to load image: ${page.imageUrl}`, {
+                error,
+                imageUrl: page.imageUrl,
+                naturalWidth: img.naturalWidth,
+                naturalHeight: img.naturalHeight,
+              });
+              // Try to check if it's a path issue
+              if (page.imageUrl && !page.imageUrl.startsWith('http')) {
+                console.warn(`Image path might be incorrect: ${page.imageUrl}. Expected to start with /uploads/`);
+              }
               resolve(); // Continue even if one image fails
             };
+            // Set src after event handlers
             img.src = page.imageUrl;
           });
         });
@@ -189,6 +203,10 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
             img.loading = 'eager';
             // Set decoding to async for better performance while maintaining quality
             img.decoding = 'async';
+            // Handle load errors
+            img.onerror = (error) => {
+              console.error(`Failed to load image in PageFlip: ${page.imageUrl}`, error);
+            };
             
             pageElement.appendChild(img);
             bookRef.current!.appendChild(pageElement);
