@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         const buffer = Buffer.from(bytes);
 
         const outputDir = join(UPLOAD_DIR, folder);
-        const pageImages = await convertPDFToImages(buffer, outputDir);
+        const pageImages = await convertPDFToImages(buffer, outputDir, folder);
 
         pages = pageImages.map((img: PageImage) => ({
           pageNumber: img.pageNumber,
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
         }];
       } else {
         return NextResponse.json(
-          { error: 'Unsupported file type. Please upload PDF or PNG/JPG files.' },
+          { error: 'Unsupported file type. Please upload PDF or image files (PNG/JPG/WebP).' },
           { status: 400 }
         );
       }

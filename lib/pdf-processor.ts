@@ -27,7 +27,8 @@ export interface PageImage {
 
 export async function convertPDFToImages(
   pdfBuffer: Buffer,
-  outputDir: string
+  outputDir: string,
+  folder?: string
 ): Promise<PageImage[]> {
   if (!pdfjsLib || !createCanvas) {
     throw new Error('PDF processing requires canvas library. Install with: brew install pkg-config cairo pango && npm install canvas pdfjs-dist');
@@ -59,27 +60,35 @@ export async function convertPDFToImages(
     // Convert canvas to buffer
     const imageBuffer = canvas.toBuffer('image/png');
 
-    // Save full-size image
-    const imageName = `page-${pageNum}.jpg`;
+    // Save full-size image as WebP
+    const imageName = `page-${pageNum}.webp`;
     const imagePath = join(outputDir, imageName);
     
     await sharp(imageBuffer)
-      .jpeg({ quality: 90 })
+      .webp({ quality: 90, effort: 6 })
       .toFile(imagePath);
 
-    // Generate thumbnail
-    const thumbnailName = `thumb-${pageNum}.jpg`;
+    // Generate thumbnail as WebP
+    const thumbnailName = `thumb-${pageNum}.webp`;
     const thumbnailPath = join(outputDir, thumbnailName);
     
     await sharp(imageBuffer)
       .resize(200, 280, { fit: 'cover' })
-      .jpeg({ quality: 80 })
+      .webp({ quality: 80, effort: 6 })
       .toFile(thumbnailPath);
 
+    // Calculate the relative path from UPLOAD_DIR
+    // outputDir is something like: /path/to/public/uploads/menus/menuId
+    // We need: menus/menuId
+    const uploadsIndex = outputDir.indexOf('uploads');
+    const relativePath = uploadsIndex >= 0 
+      ? outputDir.substring(uploadsIndex + 'uploads'.length + 1) // +1 for the slash
+      : (folder || 'menus');
+    
     pageImages.push({
       pageNumber: pageNum,
-      imagePath: `/uploads/${imageName}`,
-      thumbnailPath: `/uploads/${thumbnailName}`,
+      imagePath: `/uploads/${relativePath}/${imageName}`,
+      thumbnailPath: `/uploads/${relativePath}/${thumbnailName}`,
     });
   }
 
