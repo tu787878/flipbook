@@ -46,6 +46,24 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Helper function to normalize image URLs
+  const normalizeImageUrl = (url: string): string => {
+    if (!url) return url;
+    
+    // If it's already an absolute URL, return as is
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    
+    // If it starts with /, it's already a root-relative path, return as is
+    if (url.startsWith('/')) {
+      return url;
+    }
+    
+    // Otherwise, prepend / to make it root-relative
+    return `/${url}`;
+  };
+
   // Preload all images before initializing PageFlip
   useEffect(() => {
     if (pages.length === 0) return;
@@ -54,28 +72,47 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
       try {
         const imagePromises = pages.map((page) => {
           return new Promise<void>((resolve) => {
+            const normalizedUrl = normalizeImageUrl(page.imageUrl);
             const img = new Image();
+            
             // Don't set crossOrigin for same-origin requests
             // This prevents CORS issues when loading from the same domain
             img.onload = () => {
-              console.log(`Successfully loaded image: ${page.imageUrl}`);
+              console.log(`Successfully loaded image: ${normalizedUrl}`);
               resolve();
             };
             img.onerror = (error) => {
-              console.error(`Failed to load image: ${page.imageUrl}`, {
+              console.error(`Failed to load image: ${normalizedUrl}`, {
                 error,
-                imageUrl: page.imageUrl,
+                originalUrl: page.imageUrl,
+                normalizedUrl,
                 naturalWidth: img.naturalWidth,
                 naturalHeight: img.naturalHeight,
               });
-              // Try to check if it's a path issue
-              if (page.imageUrl && !page.imageUrl.startsWith('http')) {
-                console.warn(`Image path might be incorrect: ${page.imageUrl}. Expected to start with /uploads/`);
+              
+              // Try with absolute URL as fallback
+              if (!normalizedUrl.startsWith('http')) {
+                const absoluteUrl = typeof window !== 'undefined' 
+                  ? `${window.location.origin}${normalizedUrl}`
+                  : normalizedUrl;
+                
+                console.warn(`Attempting fallback URL: ${absoluteUrl}`);
+                const fallbackImg = new Image();
+                fallbackImg.onload = () => {
+                  console.log(`Successfully loaded image with fallback URL: ${absoluteUrl}`);
+                  resolve();
+                };
+                fallbackImg.onerror = () => {
+                  console.error(`Fallback URL also failed: ${absoluteUrl}`);
+                  resolve(); // Continue even if image fails
+                };
+                fallbackImg.src = absoluteUrl;
+              } else {
+                resolve(); // Continue even if one image fails
               }
-              resolve(); // Continue even if one image fails
             };
             // Set src after event handlers
-            img.src = page.imageUrl;
+            img.src = normalizedUrl;
           });
         });
 
@@ -191,7 +228,8 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
             pageElement.style.imageRendering = 'crisp-edges';
             
             const img = document.createElement('img');
-            img.src = page.imageUrl;
+            const normalizedUrl = normalizeImageUrl(page.imageUrl);
+            img.src = normalizedUrl;
             img.style.width = '100%';
             img.style.height = '100%';
             img.style.objectFit = 'contain';
@@ -203,9 +241,20 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
             img.loading = 'eager';
             // Set decoding to async for better performance while maintaining quality
             img.decoding = 'async';
-            // Handle load errors
+            // Handle load errors with fallback
+            let hasTriedFallback = false;
             img.onerror = (error) => {
-              console.error(`Failed to load image in PageFlip: ${page.imageUrl}`, error);
+              console.error(`Failed to load image in PageFlip: ${normalizedUrl}`, error);
+              
+              // Try fallback with absolute URL only once
+              if (!hasTriedFallback && !normalizedUrl.startsWith('http')) {
+                hasTriedFallback = true;
+                const absoluteUrl = `${window.location.origin}${normalizedUrl}`;
+                console.warn(`Attempting fallback URL in PageFlip: ${absoluteUrl}`);
+                img.src = absoluteUrl;
+              } else {
+                console.error(`Image failed to load after fallback attempt: ${normalizedUrl}`);
+              }
             };
             
             pageElement.appendChild(img);
@@ -388,10 +437,24 @@ export default function FlipBookStPage({ pages, shopName, menuName, settings }: 
                   }`}
                 >
                   <img
-                    src={page.imageUrl}
+                    src={normalizeImageUrl(page.imageUrl)}
                     alt={`${index + 1}`}
                     className="w-full h-full object-cover"
                     draggable={false}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      const currentSrc = target.src;
+                      // Only try fallback if we haven't already tried it (check if src doesn't contain origin)
+                      if (!currentSrc.startsWith('http') || currentSrc.includes(window.location.origin)) {
+                        const normalizedUrl = normalizeImageUrl(page.imageUrl);
+                        const absoluteUrl = `${window.location.origin}${normalizedUrl}`;
+                        // Only set if different from current src to avoid infinite loop
+                        if (target.src !== absoluteUrl) {
+                          console.warn(`Thumbnail image failed, trying fallback: ${absoluteUrl}`);
+                          target.src = absoluteUrl;
+                        }
+                      }
+                    }}
                   />
                   <div className="absolute bottom-0 left-0 right-0 text-[9px] text-center bg-white/90 py-0.5 font-semibold text-gray-900">
                     {index + 1}
